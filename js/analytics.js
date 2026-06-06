@@ -1,10 +1,13 @@
 // analytics.js — Analytics and visualizations utilizing Chart.js
 
+const isMobileViewport = () => window.innerWidth < 768;
+
 const chartDefaults = {
   responsive: true,
   maintainAspectRatio: false,
   plugins: {
     legend: { 
+      position: isMobileViewport() ? 'bottom' : 'top',
       labels: { 
         color: '#909090', 
         font: { family: 'JetBrains Mono', size: 11 } 

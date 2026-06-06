@@ -23,15 +23,27 @@ function updateSidebarProfile() {
   }
 }
 
+function toggleMobileClass() {
+  const width = window.innerWidth;
+  document.body.classList.toggle('is-mobile', width < 768);
+  document.body.classList.toggle('is-tablet', width >= 768 && width < 1024);
+  document.body.classList.toggle('is-desktop', width >= 1024);
+}
+
+window.addEventListener('resize', toggleMobileClass);
+
 // Global initialization
 window.addEventListener('DOMContentLoaded', () => {
-  // 1. Initialize local storage defaults
+  // 1. Initialize screen size class flags
+  toggleMobileClass();
+
+  // 2. Initialize local storage defaults
   Storage.initDefaults();
   
-  // 2. Synchronize sidebar profile
+  // 3. Synchronize sidebar profile
   updateSidebarProfile();
   
-  // 3. Register route callbacks
+  // 4. Register route callbacks
   Router.register('#dashboard', renderDashboardPage);
   Router.register('#planner', renderDailyPlannerPage);
   Router.register('#habits', renderHabitTrackerPage);
@@ -42,6 +54,6 @@ window.addEventListener('DOMContentLoaded', () => {
   Router.register('#analytics', renderAnalyticsPage);
   Router.register('#mission', renderMissionControlPage);
   
-  // 4. Fire up routing engine
+  // 5. Fire up routing engine
   Router.init();
 });

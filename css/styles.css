@@ -1399,41 +1399,331 @@ textarea.form-control {
   margin-top: 8px;
 }
 
+/* Base Nav text visibility classes */
+.nav-text-desktop {
+  display: inline;
+}
+.nav-text-mobile {
+  display: none;
+}
+.nav-icon {
+  margin-right: 12px;
+  font-size: 16px;
+}
+
 /* ========================================================
    RESPONSIVE DESIGN ADAPTATIONS
    ======================================================== */
 
-@media (max-width: 768px) {
-  body {
-    flex-direction: column;
-  }
-  
+/* TABLET LAYOUT (768px - 1023px) */
+@media (min-width: 768px) and (max-width: 1023px) {
   .sidebar {
-    width: 100%;
-    height: auto;
-    position: relative;
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-    padding: 16px;
+    width: 80px !important;
+    padding: 24px 8px !important;
   }
   
-  .sidebar ul {
-    flex-direction: row;
-    overflow-x: auto;
-    white-space: nowrap;
-    padding-bottom: 6px;
+  .logo {
+    font-size: 13px !important;
+    text-align: center !important;
+    padding-bottom: 16px !important;
+    margin-bottom: 12px !important;
+  }
+  
+  .nav-item {
+    justify-content: center !important;
+    padding: 12px 6px !important;
+  }
+  
+  .nav-icon {
+    margin-right: 0 !important;
+    font-size: 20px !important;
+  }
+  
+  .nav-text-desktop,
+  .nav-text-mobile {
+    display: none !important; /* Hide labels on tablet */
   }
   
   .sidebar-footer {
-    display: none; /* Hide profile in mobile layout */
+    padding-top: 12px !important;
+  }
+  
+  .user-profile {
+    justify-content: center !important;
+  }
+  
+  .user-info {
+    display: none !important; /* Hide details on tablet */
   }
   
   main.main-content {
-    margin-left: 0;
-    padding: 20px;
+    margin-left: 80px !important;
+    padding: 30px 24px !important;
+  }
+  
+  /* 2-Column Grid Adaptations */
+  .stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
   }
   
   .dashboard-sections-grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
+  }
+  
+  .subject-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+  
+  .analytics-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+/* MOBILE LAYOUT (max-width: 767px) */
+@media (max-width: 767px) {
+  html, body {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    flex-direction: column !important;
+  }
+  
+  /* Sidebar → Bottom Navigation Bar */
+  .sidebar {
+    width: 100% !important;
+    height: 60px !important;
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    border-right: none !important;
+    border-top: 1px solid var(--border) !important;
+    background: var(--bg-secondary) !important;
+    padding: 0 !important;
+    z-index: 9999 !important;
+    display: flex !important;
+    flex-direction: row !important;
+  }
+  
+  .sidebar .logo,
+  .sidebar .sidebar-footer {
+    display: none !important; /* Hide logo and profile footer in bottom nav */
+  }
+  
+  .sidebar ul {
+    display: flex !important;
+    flex-direction: row !important;
+    width: 100% !important;
+    height: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    overflow-x: auto !important;
+    white-space: nowrap !important;
+    -webkit-overflow-scrolling: touch;
+    gap: 0 !important;
+    justify-content: flex-start !important;
+  }
+  
+  .sidebar ul::-webkit-scrollbar {
+    display: none; /* Hide scrollbar for native app feel */
+  }
+  
+  .nav-item {
+    flex: 0 0 auto !important;
+    width: 75px !important;
+    height: 100% !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+    align-items: center !important;
+    padding: 4px 6px !important;
+    border-radius: 0 !important;
+    border-left: none !important;
+    border-top: 3px solid transparent !important;
+  }
+  
+  .nav-item:hover {
+    background: transparent !important;
+    padding-left: 6px !important;
+  }
+  
+  .nav-item.active {
+    background: var(--accent-subtle) !important;
+    color: var(--accent) !important;
+    border-left: none !important;
+    border-top: 3px solid var(--accent) !important;
+    padding-left: 6px !important;
+    box-shadow: none !important;
+  }
+  
+  .nav-icon {
+    margin-right: 0 !important;
+    margin-bottom: 2px !important;
+    font-size: 16px !important;
+  }
+  
+  .nav-text-desktop {
+    display: none !important;
+  }
+  
+  .nav-text-mobile {
+    display: inline-block !important;
+    font-size: 9px !important;
+    font-weight: 600;
+  }
+  
+  /* Main Content Area adjustments */
+  main.main-content {
+    margin-left: 0 !important;
+    padding: 20px 16px 80px 16px !important; /* 80px protects from bottom nav overlapping contents */
+  }
+  
+  .page-header {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+  
+  .page-title-group h1 {
+    font-size: 24px !important;
+  }
+  
+  /* Touch Targets optimization */
+  .btn, 
+  .form-control,
+  select.form-control {
+    min-height: 44px !important;
+    font-size: 15px !important;
+  }
+  
+  textarea.form-control {
+    min-height: 100px !important;
+  }
+  
+  /* Scaled SVG circular indicators */
+  #today-score-circle-dashboard svg,
+  #planner-day-score-circle svg,
+  #ct-circular-progress-holder svg,
+  #mc-circular-score-holder svg {
+    width: 90px !important;
+    height: 90px !important;
+  }
+  
+  /* Font size overrides */
+  .card-title {
+    font-size: 16px !important;
+  }
+  
+  .stat-value {
+    font-size: 28px !important;
+  }
+  
+  .mission-headline h2 {
+    font-size: 18px !important;
+  }
+  
+  /* Single Column Stacks */
+  .stats-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  
+  .dashboard-sections-grid {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+  
+  /* 2-column grid for Subject Cards on mobile */
+  .subject-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 12px !important;
+  }
+  
+  @media (max-width: 400px) {
+    .subject-grid {
+      grid-template-columns: 1fr !important;
+    }
+  }
+  
+  .subject-card {
+    height: 95px !important;
+    padding: 12px !important;
+  }
+  
+  .subject-name {
+    font-size: 13px !important;
+  }
+  
+  /* Scrollable Heatmap Wrapper */
+  .yearly-heatmap-wrapper {
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  .yearly-heatmap-grid {
+    grid-template-rows: repeat(7, 8px) !important;
+    grid-auto-columns: 8px !important;
+    gap: 1px !important;
+  }
+  
+  .year-cell {
+    width: 8px !important;
+    height: 8px !important;
+  }
+  
+  /* Habits heatmaps smaller cells */
+  .heatmap-grid {
+    gap: 2px !important;
+    padding: 6px !important;
+  }
+  
+  .heatmap-cell {
+    border-radius: 1px !important;
+  }
+  
+  /* Daily Planner touch lists */
+  .planner-grid {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+  }
+  
+  .task-item {
+    padding: 12px 14px !important;
+    min-height: 44px !important;
+  }
+  
+  .task-label {
+    font-size: 14px !important;
+  }
+  
+  /* Projects full width stacked */
+  .project-card {
+    grid-template-columns: 1fr !important;
+    gap: 16px !important;
+    padding: 16px !important;
+  }
+  
+  /* CodeTantra layout */
+  .codetantra-tracker {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+  
+  /* Weekly Review layout */
+  .review-grid {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
+  }
+  
+  /* Charts dimensions override */
+  .canvas-container {
+    height: 250px !important;
+  }
+  
+  /* Mission Control settings layouts */
+  .mission-control-layout {
+    grid-template-columns: 1fr !important;
+    gap: 20px !important;
   }
 }
