@@ -1,75 +1,70 @@
 const express = require('express');
-const mongoose = require('mongoose');
 const cors = require('cors');
 const path = require('path');
-require('dotenv').config();
+const fs = require('fs');
 
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 3030;
+const DB_FILE = path.join(__dirname, 'db.json');
 
 // Enable CORS and JSON body parsing
 app.use(cors());
 app.use(express.json());
 
-// MongoDB connection
-const mongoURI = process.env.MONGODB_URI || 'mongodb+srv://sprakax001_db-PXOS:MLLVXCa9v1qDd7W5@productivexos.cx54iti.mongodb.net/ProductiveXOS?retryWrites=true&w=majority';
+// Helper function to read DB
+function readDb() {
+  try {
+    if (fs.existsSync(DB_FILE)) {
+      const raw = fs.readFileSync(DB_FILE, 'utf8');
+      return JSON.parse(raw || '{}');
+    }
+  } catch (e) {
+    console.error('Error reading JSON DB file:', e);
+  }
+  return {};
+}
 
-console.log('Connecting to MongoDB...');
-mongoose.connect(mongoURI)
-  .then(() => console.log('Successfully connected to MongoDB!'))
-  .catch(err => console.error('MongoDB connection error:', err));
-
-// Storage Schema
-const StorageSchema = new mongoose.Schema({
-  key: { type: String, required: true, unique: true },
-  value: { type: mongoose.Schema.Types.Mixed, required: true }
-}, { timestamps: true, minimize: false });
-
-const StorageModel = mongoose.model('Storage', StorageSchema);
+// Helper function to write DB
+function writeDb(data) {
+  try {
+    fs.writeFileSync(DB_FILE, JSON.stringify(data, null, 2), 'utf8');
+    return true;
+  } catch (e) {
+    console.error('Error writing to JSON DB file:', e);
+    return false;
+  }
+}
 
 // REST API Endpoints
 // Get all stored data keys
-app.get('/api/data', async (req, res) => {
-  try {
-    const items = await StorageModel.find({});
-    const responseData = {};
-    items.forEach(item => {
-      responseData[item.key] = item.value;
-    });
-    res.json({ success: true, data: responseData });
-  } catch (error) {
-    console.error('Error fetching data:', error);
-    res.status(500).json({ success: false, error: error.message });
-  }
+app.get('/api/data', (req, res) => {
+  const data = readDb();
+  res.json({ success: true, data });
 });
 
 // Upsert a data key
-app.post('/api/data', async (req, res) => {
+app.post('/api/data', (req, res) => {
   const { key, value } = req.body;
   if (!key) {
     return res.status(400).json({ success: false, error: 'Key is required' });
   }
-  try {
-    const updatedItem = await StorageModel.findOneAndUpdate(
-      { key },
-      { value },
-      { upsert: true, new: true, setDefaultsOnInsert: true }
-    );
-    res.json({ success: true, data: updatedItem });
-  } catch (error) {
-    console.error(`Error saving data for ${key}:`, error);
-    res.status(500).json({ success: false, error: error.message });
+  
+  const data = readDb();
+  data[key] = value;
+  
+  if (writeDb(data)) {
+    res.json({ success: true, message: 'Data saved successfully' });
+  } else {
+    res.status(500).json({ success: false, error: 'Failed to write to JSON file database' });
   }
 });
 
 // Reset database collection
-app.post('/api/reset', async (req, res) => {
-  try {
-    await StorageModel.deleteMany({});
-    res.json({ success: true, message: 'All storage collection data deleted' });
-  } catch (error) {
-    console.error('Error resetting collection:', error);
-    res.status(500).json({ success: false, error: error.message });
+app.post('/api/reset', (req, res) => {
+  if (writeDb({})) {
+    res.json({ success: true, message: 'All JSON file data deleted' });
+  } else {
+    res.status(500).json({ success: false, error: 'Failed to reset JSON file database' });
   }
 });
 
@@ -86,7 +81,11 @@ app.use((req, res) => {
   });
 });
 
-// Start the server
-app.listen(PORT, () => {
-  console.log(`Server is running at http://localhost:${PORT}`);
-});
+// Export the app for Vercel serverless deployment, but run app.listen locally
+if (process.env.VERCEL) {
+  module.exports = app;
+} else {
+  app.listen(PORT, () => {
+    console.log(`Server is running at http://localhost:${PORT}`);
+  });
+}
