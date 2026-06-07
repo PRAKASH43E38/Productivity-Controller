@@ -21,8 +21,7 @@
   "homepage": "https://github.com/PRAKASH43E38/Productivity-Controller#readme",
   "dependencies": {
     "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
     "express": "^5.2.1",
-    "mongoose": "^9.6.3"
+    "sqlite3": "^5.1.7"
   }
 }
