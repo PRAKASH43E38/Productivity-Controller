@@ -103,25 +103,23 @@ function calcDailyScore(date = Storage.today()) {
   const tasks = Storage.getDate('px_daily_tasks', date);
   const habits = Storage.getDate('px_habits', date);
   const ct = Storage.get('px_codetantra');
+  const tasksList = Storage.get('px_daily_tasks_list') || DAILY_TASKS;
 
-  // Map the internal learning task keys to their user-facing daily planner labels
-  const learningTaskMap = {
-    python: "Python Practice",
-    numpy: "NumPy Practice",
-    pandas: "Pandas Practice",
-    sql: "SQL Practice",
-    statistics: "Statistics Practice",
-    dseda: "DS & EDA Study",
-    ml: "ML Concepts"
-  };
+  // Learning score - dynamic
+  const learningTasks = tasksList.learning || [];
+  const learningDone = learningTasks.filter(taskLabel => tasks[taskLabel] === true).length;
+  const learning = learningTasks.length > 0 ? Math.round((learningDone / learningTasks.length) * 20) : 0;
 
-  const learningDone = Object.values(learningTaskMap).filter(taskLabel => tasks[taskLabel] === true).length;
-  const learning = Math.round((learningDone / Object.keys(learningTaskMap).length) * 20);
+  // Projects score - dynamic
+  const projectTasks = tasksList.projects || [];
+  const projectTasksOnly = projectTasks.filter(task => !task.toLowerCase().includes('github'));
+  const projectDone = projectTasksOnly.filter(task => tasks[task] === true).length;
+  const projects = projectTasksOnly.length > 0 ? Math.round((projectDone / projectTasksOnly.length) * 20) : 0;
 
-  const projectDone = tasks['Project Building'] === true ? 1 : 0;
-  const projects = projectDone * 20;
-
-  const github = tasks['GitHub Update'] === true ? 20 : 0;
+  // GitHub contribution score - dynamic
+  const githubTasks = projectTasks.filter(task => task.toLowerCase().includes('github'));
+  const githubDone = githubTasks.some(task => tasks[task] === true) || tasks['GitHub Update'] === true;
+  const github = githubDone ? 20 : 0;
 
   const ctUpdatedToday = (ct?.history || []).some(h => h.date === date);
   const codetantra = ctUpdatedToday ? 20 : 0;

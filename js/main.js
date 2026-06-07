@@ -33,12 +33,12 @@ function toggleMobileClass() {
 window.addEventListener('resize', toggleMobileClass);
 
 // Global initialization
-window.addEventListener('DOMContentLoaded', () => {
+window.addEventListener('DOMContentLoaded', async () => {
   // 1. Initialize screen size class flags
   toggleMobileClass();
 
-  // 2. Initialize local storage defaults
-  Storage.initDefaults();
+  // 2. Initialize storage from database
+  await Storage.loadFromServer();
   
   // 3. Synchronize sidebar profile
   updateSidebarProfile();

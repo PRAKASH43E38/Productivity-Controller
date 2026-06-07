@@ -59,10 +59,16 @@ function handleBackupImport(e) {
   reader.readAsText(file);
 }
 
-function triggerReset() {
+async function triggerReset() {
   if (confirm("🚨 WARNING: Are you sure you want to hard reset ALL your data? This will clear all topic checkmarks, habits history, projects, and weekly retrospectives. This action is IRREVERSIBLE.")) {
     localStorage.clear();
-    Storage.initDefaults();
+    try {
+      await fetch('/api/reset', { method: 'POST' });
+    } catch (e) {
+      console.warn('Failed to reset backend database:', e);
+    }
+    // Reload database and update cache/defaults
+    await Storage.loadFromServer();
     updateSidebarProfile();
     alert("System database has been reset to default values.");
     Router.navigate('#dashboard');

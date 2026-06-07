@@ -36,10 +36,11 @@ function toggleTask(taskId, done) {
 
 function renderPlannerProgress() {
   const dayTasks = Storage.getDate('px_daily_tasks', plannerDate);
-  const totalTasks = Object.values(DAILY_TASKS).flat().length;
+  const tasksList = Storage.get('px_daily_tasks_list') || DAILY_TASKS;
+  const totalTasks = Object.values(tasksList).flat().length;
   
   let completedCount = 0;
-  Object.values(DAILY_TASKS).flat().forEach(taskId => {
+  Object.values(tasksList).flat().forEach(taskId => {
     if (dayTasks[taskId] === true) completedCount++;
   });
   
@@ -52,7 +53,7 @@ function renderPlannerProgress() {
   if (progressText) progressText.textContent = `${pct}% (${completedCount}/${totalTasks} tasks completed)`;
 
   // Update classes for task elements
-  Object.values(DAILY_TASKS).flat().forEach((taskId) => {
+  Object.values(tasksList).flat().forEach((taskId) => {
     const el = document.getElementById(`task-card-${taskId.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '')}`);
     if (el) {
       const isDone = dayTasks[taskId] === true;
@@ -70,9 +71,60 @@ function renderPlannerProgress() {
   }
 }
 
+function addCustomTask(category) {
+  const inputEl = document.getElementById(`add-task-input-${category}`);
+  if (!inputEl) return;
+  const taskName = inputEl.value.trim();
+  if (!taskName) return;
+  
+  const tasksList = Storage.get('px_daily_tasks_list') || JSON.parse(JSON.stringify(DAILY_TASKS));
+  if (!tasksList[category]) {
+    tasksList[category] = [];
+  }
+  
+  // Check if it already exists in this category
+  if (tasksList[category].includes(taskName)) {
+    alert("Task already exists in this category!");
+    return;
+  }
+  
+  tasksList[category].push(taskName);
+  Storage.set('px_daily_tasks_list', tasksList);
+  
+  // Clear input and reload page
+  inputEl.value = '';
+  renderDailyPlannerPage();
+}
+
+function deleteCustomTask(category, taskName) {
+  if (!confirm(`Are you sure you want to delete the task "${taskName}"?`)) {
+    return;
+  }
+  
+  const tasksList = Storage.get('px_daily_tasks_list') || JSON.parse(JSON.stringify(DAILY_TASKS));
+  if (!tasksList[category]) return;
+  
+  tasksList[category] = tasksList[category].filter(t => t !== taskName);
+  Storage.set('px_daily_tasks_list', tasksList);
+  
+  // Clean up any completion state for this task
+  const dayTasks = Storage.getDate('px_daily_tasks', plannerDate);
+  if (dayTasks[taskName] !== undefined) {
+    delete dayTasks[taskName];
+    Storage.setDate('px_daily_tasks', plannerDate, dayTasks);
+  }
+  
+  // Recalculate daily score
+  const scoreData = calcDailyScore(plannerDate);
+  Storage.mergeDate('px_scores', plannerDate, scoreData);
+
+  renderDailyPlannerPage();
+}
+
 function renderDailyPlannerPage() {
   const todayStr = Storage.today();
   const dayTasks = Storage.getDate('px_daily_tasks', plannerDate);
+  const tasksList = Storage.get('px_daily_tasks_list') || DAILY_TASKS;
   const isFutureLocked = plannerDate >= todayStr;
 
   const displayDateText = new Date(plannerDate + 'T00:00:00').toLocaleDateString('en-US', {
@@ -125,18 +177,23 @@ function renderDailyPlannerPage() {
       <div class="card task-list-container">
         <h3>Morning Accountability</h3>
         <div class="task-items">
-          ${DAILY_TASKS.morning.map(task => {
+          ${(tasksList.morning || []).map(task => {
             const cleanId = task.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
             const isDone = dayTasks[task] === true;
             return `
-              <div class="task-item ${isDone ? 'completed' : ''}" id="task-card-${cleanId}" onclick="document.getElementById('check-${cleanId}').click()">
+              <div class="task-item ${isDone ? 'completed' : ''}" id="task-card-${cleanId}" onclick="document.getElementById('check-${cleanId}').click()" style="position: relative; padding-right: 32px;">
                 <input type="checkbox" id="check-${cleanId}" class="task-checkbox" 
                   ${isDone ? 'checked' : ''} 
                   onclick="event.stopPropagation(); toggleTask('${task}', this.checked)">
                 <span class="task-label">${task}</span>
+                <span class="delete-task-btn" onclick="event.stopPropagation(); deleteCustomTask('morning', '${task.replace(/'/g, "\\'")}')" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #ff4a4a; font-size: 16px; font-weight: bold; opacity: 0.5; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">&times;</span>
               </div>
             `;
           }).join('')}
+        </div>
+        <div class="add-task-form" style="display: flex; gap: 8px; margin-top: 12px; padding: 0 4px;">
+          <input type="text" id="add-task-input-morning" placeholder="Add morning task..." class="form-control" style="flex: 1; padding: 6px 10px; font-size: 13px; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; background: rgba(0,0,0,0.2); color: var(--text);">
+          <button onclick="addCustomTask('morning')" class="btn btn-primary" style="padding: 4px 10px; font-size: 14px; border-radius: 4px; font-weight: bold; line-height: 1;">+</button>
         </div>
       </div>
 
@@ -144,18 +201,23 @@ function renderDailyPlannerPage() {
       <div class="card task-list-container">
         <h3>Syllabus Practice</h3>
         <div class="task-items">
-          ${DAILY_TASKS.learning.map(task => {
+          ${(tasksList.learning || []).map(task => {
             const cleanId = task.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
             const isDone = dayTasks[task] === true;
             return `
-              <div class="task-item ${isDone ? 'completed' : ''}" id="task-card-${cleanId}" onclick="document.getElementById('check-${cleanId}').click()">
+              <div class="task-item ${isDone ? 'completed' : ''}" id="task-card-${cleanId}" onclick="document.getElementById('check-${cleanId}').click()" style="position: relative; padding-right: 32px;">
                 <input type="checkbox" id="check-${cleanId}" class="task-checkbox" 
                   ${isDone ? 'checked' : ''} 
                   onclick="event.stopPropagation(); toggleTask('${task}', this.checked)">
                 <span class="task-label">${task}</span>
+                <span class="delete-task-btn" onclick="event.stopPropagation(); deleteCustomTask('learning', '${task.replace(/'/g, "\\'")}')" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #ff4a4a; font-size: 16px; font-weight: bold; opacity: 0.5; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">&times;</span>
               </div>
             `;
           }).join('')}
+        </div>
+        <div class="add-task-form" style="display: flex; gap: 8px; margin-top: 12px; padding: 0 4px;">
+          <input type="text" id="add-task-input-learning" placeholder="Add study task..." class="form-control" style="flex: 1; padding: 6px 10px; font-size: 13px; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; background: rgba(0,0,0,0.2); color: var(--text);">
+          <button onclick="addCustomTask('learning')" class="btn btn-primary" style="padding: 4px 10px; font-size: 14px; border-radius: 4px; font-weight: bold; line-height: 1;">+</button>
         </div>
       </div>
 
@@ -163,18 +225,23 @@ function renderDailyPlannerPage() {
       <div class="card task-list-container">
         <h3>Portfolio Projects</h3>
         <div class="task-items">
-          ${DAILY_TASKS.projects.map(task => {
+          ${(tasksList.projects || []).map(task => {
             const cleanId = task.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
             const isDone = dayTasks[task] === true;
             return `
-              <div class="task-item ${isDone ? 'completed' : ''}" id="task-card-${cleanId}" onclick="document.getElementById('check-${cleanId}').click()">
+              <div class="task-item ${isDone ? 'completed' : ''}" id="task-card-${cleanId}" onclick="document.getElementById('check-${cleanId}').click()" style="position: relative; padding-right: 32px;">
                 <input type="checkbox" id="check-${cleanId}" class="task-checkbox" 
                   ${isDone ? 'checked' : ''} 
                   onclick="event.stopPropagation(); toggleTask('${task}', this.checked)">
                 <span class="task-label">${task}</span>
+                <span class="delete-task-btn" onclick="event.stopPropagation(); deleteCustomTask('projects', '${task.replace(/'/g, "\\'")}')" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #ff4a4a; font-size: 16px; font-weight: bold; opacity: 0.5; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">&times;</span>
               </div>
             `;
           }).join('')}
+        </div>
+        <div class="add-task-form" style="display: flex; gap: 8px; margin-top: 12px; padding: 0 4px;">
+          <input type="text" id="add-task-input-projects" placeholder="Add project task..." class="form-control" style="flex: 1; padding: 6px 10px; font-size: 13px; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; background: rgba(0,0,0,0.2); color: var(--text);">
+          <button onclick="addCustomTask('projects')" class="btn btn-primary" style="padding: 4px 10px; font-size: 14px; border-radius: 4px; font-weight: bold; line-height: 1;">+</button>
         </div>
       </div>
 
@@ -182,18 +249,23 @@ function renderDailyPlannerPage() {
       <div class="card task-list-container">
         <h3>Career Prep</h3>
         <div class="task-items">
-          ${DAILY_TASKS.other.map(task => {
+          ${(tasksList.other || []).map(task => {
             const cleanId = task.replace(/\s+/g, '-').replace(/[^a-zA-Z0-9-]/g, '');
             const isDone = dayTasks[task] === true;
             return `
-              <div class="task-item ${isDone ? 'completed' : ''}" id="task-card-${cleanId}" onclick="document.getElementById('check-${cleanId}').click()">
+              <div class="task-item ${isDone ? 'completed' : ''}" id="task-card-${cleanId}" onclick="document.getElementById('check-${cleanId}').click()" style="position: relative; padding-right: 32px;">
                 <input type="checkbox" id="check-${cleanId}" class="task-checkbox" 
                   ${isDone ? 'checked' : ''} 
                   onclick="event.stopPropagation(); toggleTask('${task}', this.checked)">
                 <span class="task-label">${task}</span>
+                <span class="delete-task-btn" onclick="event.stopPropagation(); deleteCustomTask('other', '${task.replace(/'/g, "\\'")}')" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); cursor: pointer; color: #ff4a4a; font-size: 16px; font-weight: bold; opacity: 0.5; transition: opacity 0.2s;" onmouseover="this.style.opacity=1" onmouseout="this.style.opacity=0.5">&times;</span>
               </div>
             `;
           }).join('')}
+        </div>
+        <div class="add-task-form" style="display: flex; gap: 8px; margin-top: 12px; padding: 0 4px;">
+          <input type="text" id="add-task-input-other" placeholder="Add prep task..." class="form-control" style="flex: 1; padding: 6px 10px; font-size: 13px; border: 1px solid rgba(255,255,255,0.1); border-radius: 4px; background: rgba(0,0,0,0.2); color: var(--text);">
+          <button onclick="addCustomTask('other')" class="btn btn-primary" style="padding: 4px 10px; font-size: 14px; border-radius: 4px; font-weight: bold; line-height: 1;">+</button>
         </div>
       </div>
 

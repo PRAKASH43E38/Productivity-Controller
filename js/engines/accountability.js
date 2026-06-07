@@ -1,12 +1,12 @@
 // accountability.js — Accountability engine for daily check-ins and heatmaps
 
 const ACC_COLORS = {
-  0: '#ff2222',   // Red — didn't show up
-  1: '#1a4d2e',   // Very dark green
-  2: '#1e6b3b',   // Dark green
-  3: '#2a9d52',   // Medium green
-  4: '#33c25e',   // Green
-  5: '#00ff88'    // Accent green — perfect day
+  0: '#000000',   // Black — 0% modules checked
+  1: '#103010',   // Very dark green
+  2: '#1b521b',   // Dark green
+  3: '#2d802d',   // Medium green
+  4: '#4cb34c',   // Green
+  5: '#7cff8a'    // Light green — 100% perfect day
 };
 
 function calcAccountabilityScore(date) {
